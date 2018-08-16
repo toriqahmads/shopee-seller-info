@@ -26,9 +26,10 @@ class Shopee :
         res = requests.get(url, headers = headers).json()
         return int(math.ceil(float(float(res['total_count'])/50)))
     
-    def getSellerId(self) :
+    def getSellerId(self, page) :
+        page = page*60
         headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'}
-        url = "https://shopee.co.id/api/v2/search_items/?by=relevancy&keyword={}&limit=50&locations=Jawa%2520Tengah&newest={}&order=desc&page_type=search".format(urllib.quote(self.keyword), self.page)
+        url = "https://shopee.co.id/api/v2/search_items/?by=relevancy&keyword={}&limit=50&locations=Jawa%2520Tengah&newest={}&order=desc&page_type=search".format(urllib.quote(self.keyword), page)
         res = requests.get(url, headers = headers).json()
 
         for data in res['items'] :
@@ -75,11 +76,9 @@ class Shopee :
                 if data not in self.seller :
                     self.seller.append(data)
 
-        print self.seller
-
     def convertToCsv(self) :
         keys = self.seller[0].keys()
-        with open(r"%s.csv" % self.path, "wb") as output_file:
+        with open(r"%s.csv" % self.path, "wb+") as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(self.seller)
@@ -88,9 +87,12 @@ class Shopee :
         for data in self.datas :
             self.getSeller(data)
 
+    def exe(self) :
+        for i in range(0, self.page) :
+            self.getSellerId(i)
+
+        self.getAllSellerInfo()
         self.convertToCsv()
 
-c = Shopee("helm ink", "D:\sellershopees")
-print c.getTotal()
-c.getSellerId()
-c.getAllSellerInfo()
+c = Shopee("batik demak", "D:\sellershope")
+c.exe()
