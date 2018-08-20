@@ -9,6 +9,8 @@ import math
 import csv
 
 class Shopee :
+    cookie = ""
+    token = ""
     datas = []
     seller = []
     page = 0
@@ -35,24 +37,24 @@ class Shopee :
         for data in res['items'] :
             if data['shopid'] not in self.datas :
                 self.datas.append(data['shopid'])
-        
-    def getSeller(self, shopid) :
+
+    def getCookie(self) :
         url = "https://shopee.co.id/"
-        data = {'shop_ids':[shopid]}
-        
         co = Options()
         co.add_argument("--nosandbox")
         dp = os.getcwd()+"\\chromedriver.exe"
         driver = webdriver.Chrome(executable_path = dp, chrome_options = co)
         driver.get(url)
-        cookie = ';'.join(['{}={}'.format(item['name'], item['value'])
+        self.cookie = ';'.join(['{}={}'.format(item['name'], item['value'])
                     for item in driver.get_cookies()])
-        token = driver.get_cookie('csrftoken')['value']          
+        self.token = driver.get_cookie('csrftoken')['value']          
         driver.quit()
         
+    def getSeller(self, shopid) :
+        data = {'shop_ids':[shopid]}
         url = "https://shopee.co.id/api/v1/shops/"
-        headers = {'x-csrftoken': token,
-                   'cookie': cookie,
+        headers = {'x-csrftoken': self.token,
+                   'cookie': self.cookie,
                    'content-type': 'application/json',
                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
                    'referer': 'https://shopee.co.id/'
@@ -61,7 +63,7 @@ class Shopee :
         res = req.json()
 
         for data in res:
-            #if "DEMAK" in data['place'] :
+            if "DEMAK" in data['place'] :
                 data = {'sellerid': data['shopid'],
                         'username': data['username'],
                         'name': data['name'],
@@ -90,9 +92,10 @@ class Shopee :
     def exe(self) :
         for i in range(0, self.page) :
             self.getSellerId(i)
-
+        self.getCookie()
         self.getAllSellerInfo()
         self.convertToCsv()
 
-c = Shopee("batik demak", "D:\sellershope")
+c = Shopee("khimar", "D:\sellershope")
 c.exe()
+print c.datas
